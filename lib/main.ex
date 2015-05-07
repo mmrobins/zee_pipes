@@ -9,21 +9,18 @@ defmodule ZeePipe do
     Enum.count(with_seq)
   end
 
-  def gender_percentages do
+  def gender_percentage(gender) do
     f = File.stream!('mss.csv')
     total = Enum.count(f)
 
-    female_count = count(f, "female")
-    IO.puts("female count")
-    IO.inspect(female_count)
-    IO.puts("female ratio")
-    IO.inspect(female_count / total)
+    gender_count = count(f, gender)
+    IO.puts("#{gender} count")
+    IO.inspect(gender_count)
+    IO.puts("#{gender} ratio")
+    ratio = gender_count / total
+    IO.inspect(ratio)
 
-    male_count = count(f, "male")
-    IO.puts("male count")
-    IO.inspect(male_count)
-    IO.puts("male ratio")
-    IO.inspect(male_count / total)
+    ratio
   end
 
   def min_max_mean_weights do
@@ -45,13 +42,11 @@ defmodule ZeePipe do
     IO.inspect max_weight
     IO.puts "mean weight"
     IO.inspect mean_weight
+    { min_weight, max_weight, mean_weight }
   end
 
-  def count(list, gender) do
-    list |> Enum.map( fn(x) -> String.split(x, ~r/\",\"/) end)
-        #|> Enum.filter( fn(x) -> foo = hd(tl(x)); IO.inspect(foo); IO.inspect(is_bitstring(foo)); to_string(foo) == "female" end)
-         |> Enum.filter( fn(x) -> foo = hd(tl(x)); to_string(foo) == gender end)
-         |> Enum.to_list
+  defp count(list, gender) do
+    list |> Enum.filter( fn(x) -> String.match?(x, ~r/"#{gender}/) end )
          |> Enum.count
   end
 end
