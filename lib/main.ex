@@ -5,21 +5,46 @@ defmodule ZeePipe do
 
   def dna_count(sequence) do
     f = File.stream!('mss.csv')
-    #total = Enum.count(f)
     with_seq = f |> Enum.filter( fn(x) -> String.match?(x, ~r/#{sequence}/) end )
-    with_seq_count = Enum.count(with_seq)
-    female_count = count(with_seq, "female")
+    Enum.count(with_seq)
+  end
+
+  def gender_percentages do
+    f = File.stream!('mss.csv')
+    total = Enum.count(f)
+
+    female_count = count(f, "female")
     IO.puts("female count")
     IO.inspect(female_count)
     IO.puts("female ratio")
-    IO.inspect(female_count / with_seq_count)
+    IO.inspect(female_count / total)
 
-    male_count = count(with_seq, "male")
+    male_count = count(f, "male")
     IO.puts("male count")
     IO.inspect(male_count)
     IO.puts("male ratio")
-    IO.inspect(male_count / with_seq_count)
-    Enum.count(with_seq)
+    IO.inspect(male_count / total)
+  end
+
+  def min_max_mean_weights do
+    f = File.stream!('mss.csv')
+
+    weights = f |> Stream.map( fn(x) -> String.split(x, ~r/\",\"/) end)
+                |> Stream.map( fn(x) -> {:ok, weight} = Enum.fetch(x, 12); String.to_float(weight) end)
+
+    min_weight = Enum.min(weights)
+    max_weight = Enum.max(weights)
+    #IO.inspect(Enum.take(weights, 15))
+    mean_weight = Enum.sum(weights)
+    total = Enum.count(f)
+    IO.inspect(total)
+
+    IO.puts "min weight"
+    IO.inspect min_weight
+    IO.puts "max weight"
+    IO.inspect max_weight
+    IO.puts "mean weight"
+    IO.inspect mean_weight
   end
 
   def count(list, gender) do
