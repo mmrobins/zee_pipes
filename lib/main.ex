@@ -5,19 +5,20 @@ defmodule ZeePipe do
 
   def dna_count(sequence) do
     f = File.stream!('mss.csv')
-    total = Enum.count(f)
+    #total = Enum.count(f)
     with_seq = f |> Enum.filter( fn(x) -> String.match?(x, ~r/#{sequence}/) end )
+    with_seq_count = Enum.count(with_seq)
     female_count = count(with_seq, "female")
     IO.puts("female count")
     IO.inspect(female_count)
     IO.puts("female ratio")
-    IO.inspect(female_count / total)
+    IO.inspect(female_count / with_seq_count)
 
     male_count = count(with_seq, "male")
     IO.puts("male count")
     IO.inspect(male_count)
     IO.puts("male ratio")
-    IO.inspect(male_count / total)
+    IO.inspect(male_count / with_seq_count)
     Enum.count(with_seq)
   end
 
