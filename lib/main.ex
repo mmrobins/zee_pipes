@@ -5,7 +5,7 @@ defmodule ZeePipe do
 
   def dna_count(sequence) do
     f = File.stream!('mss.csv')
-    with_seq = f |> pfilter( fn(x) -> String.match?(x, ~r/#{sequence}/) end )
+    with_seq = f |> pfilter( fn(x) -> String.contains?(x, sequence) end )
     Enum.count(with_seq)
   end
 
@@ -54,7 +54,7 @@ defmodule ZeePipe do
     # Get this process's PID
     me = self
     collection
-      |> Stream.chunk(50)
+      |> Stream.chunk(1000)
       |> Stream.map(fn (elem) ->
         spawn_link fn -> (send me, { self, Enum.filter(elem, function) }) end
       end)
