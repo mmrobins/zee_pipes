@@ -5,7 +5,7 @@ defmodule ZeePipe do
 
   def dna_count(sequence) do
     f = File.stream!('mss.csv')
-    with_seq = f |> Enum.filter( fn(x) -> String.match?(x, ~r/#{sequence}/) end )
+    with_seq = f |> pfilter( fn(x) -> String.match?(x, ~r/#{sequence}/) end )
     Enum.count(with_seq)
   end
 
@@ -26,8 +26,8 @@ defmodule ZeePipe do
   def min_max_mean_weights do
     f = File.stream!('mss.csv')
 
-    weights = f |> pmap( fn(x) -> String.split(x, ~r/\",\"/) end)
-                |> pmap( fn(x) -> {:ok, weight} = Enum.fetch(x, 12); String.to_float(weight) end)
+    weights = f |> pfilter( fn(x) -> String.split(x, ~r/\",\"/) end)
+                |> pfilter( fn(x) -> {:ok, weight} = Enum.fetch(x, 12); String.to_float(weight) end)
 
     min_weight = Enum.min(weights)
     max_weight = Enum.max(weights)
@@ -50,29 +50,16 @@ defmodule ZeePipe do
          |> Enum.count
   end
 
-  def pmap(collection, function) do
+  def pfilter(collection, function) do
     # Get this process's PID
     me = self
     collection
-    |>
-    Enum.map(fn (elem) ->
-      # For each element in the collection, spawn a process and
-      # tell it to:
-      # - Run the given function on that element
-      # - Call up the parent process
-      # - Send the parent its PID and its result
-      # Each call to spawn_link returns the child PID immediately.
-      spawn_link fn -> (send me, { self, function.(elem) }) end
-    end) |>
-    # Here we have the complete list of child PIDs. We don't yet know
-    # which, if any, have completed their work
-    Enum.map(fn (pid) ->
-      # For each child PID, in order, block until we receive an
-      # answer from that PID and return the answer
-      # While we're waiting on something from the first pid, we may
-      # get results from others, but we won't "get those out of the
-      # mailbox" until we finish with the first one.
-      receive do { ^pid, result } -> result end
-    end)
+      |> Stream.chunk(50)
+      |> Stream.map(fn (elem) ->
+        spawn_link fn -> (send me, { self, Enum.filter(elem, function) }) end
+      end)
+      |> Enum.flat_map(fn (pid) ->
+        receive do { ^pid, result } -> result end
+      end)
   end
 end

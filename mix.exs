@@ -25,6 +25,6 @@ defmodule ZeePipe.Mixfile do
   #
   # Type `mix help deps` for more examples and options
   defp deps do
-    []
+    [{:pnum, git: "git@github.com:adlawson/elixir-pnum.git"}]
   end
 end
