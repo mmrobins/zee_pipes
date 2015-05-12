@@ -5,7 +5,7 @@ defmodule ZeePipe do
 
   def dna_count(sequence) do
     f = File.stream!('mss.csv')
-    with_seq = f |> pfilter( fn(x) -> String.contains?(x, sequence) end )
+    with_seq = f |> Enum.filter( fn(x) -> String.contains?(x, sequence) end )
     Enum.count(with_seq)
   end
 
@@ -23,18 +23,22 @@ defmodule ZeePipe do
     ratio
   end
 
-  def min_max_mean_weights do
+  def min_max_mean do
     f = File.stream!('mss.csv')
 
-    weights = f |> pfilter( fn(x) -> String.split(x, ~r/\",\"/) end)
-                |> pfilter( fn(x) -> {:ok, weight} = Enum.fetch(x, 12); String.to_float(weight) end)
+    weights = f |> pmap( fn(x) ->
+      [ _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, weight, _14, _15, _16, _17 ] = String.split(x, "\",\"")
+      #foo = String.split(x, ",")
+      #IO.inspect Enum.count(foo)
+      String.to_float(weight)
+    end)
 
     min_weight = Enum.min(weights)
     max_weight = Enum.max(weights)
     #IO.inspect(Enum.take(weights, 15))
-    mean_weight = Enum.sum(weights)
-    total = Enum.count(f)
-    IO.inspect(total)
+    total_weight = Enum.sum(weights)
+    count = Enum.count(f)
+    mean_weight = total_weight / count
 
     IO.puts "min weight"
     IO.inspect min_weight
@@ -50,6 +54,19 @@ defmodule ZeePipe do
          |> Enum.count
   end
 
+  def pmap(collection, function) do
+    # Get this process's PID
+    me = self
+    collection
+      |> Stream.chunk(1000)
+      |> Stream.map(fn (elem) ->
+        spawn_link fn -> (send me, { self, Enum.map(elem, function) }) end
+      end)
+      |> Stream.flat_map(fn (pid) ->
+        receive do { ^pid, result } -> result end
+      end)
+  end
+
   def pfilter(collection, function) do
     # Get this process's PID
     me = self
@@ -58,7 +75,7 @@ defmodule ZeePipe do
       |> Stream.map(fn (elem) ->
         spawn_link fn -> (send me, { self, Enum.filter(elem, function) }) end
       end)
-      |> Enum.flat_map(fn (pid) ->
+      |> Stream.flat_map(fn (pid) ->
         receive do { ^pid, result } -> result end
       end)
   end

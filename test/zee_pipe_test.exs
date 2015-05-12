@@ -17,4 +17,12 @@ defmodule ZeePipeTest do
   #test "min max mean" do
   #  assert ZeePipe.min_max_mean_weights == { 1, 2, 3 }
   #end
+
+  @tag timeout: 100000
+  test "find stuff out" do
+    { min, max, mean } = ZeePipe.min_max_mean
+    assert min == 96.8
+    assert max == 257.4
+    assert_in_delta(mean, 178.2, 1)
+  end
 end
