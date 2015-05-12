@@ -26,25 +26,39 @@ defmodule ZeePipe do
   def min_max_mean do
     f = File.stream!('mss.csv')
 
-    weights = f |> pmap( fn(x) ->
-      [ _1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, weight, _14, _15, _16, _17 ] = String.split(x, "\",\"")
-      #foo = String.split(x, ",")
-      #IO.inspect Enum.count(foo)
-      String.to_float(weight)
+    seed = [
+      99999999,
+      0,
+      0,
+      0,
+    ]
+
+    result = Enum.reduce(f, seed, fn(x, acc) ->
+      [ _1, gender, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, weight, _14, _15, _16, _17 ] = String.split(x, "\",\"")
+      weight = String.to_float(weight)
+
+      [ min_weight, max_weight, total_weight, row_count ] = acc
+
+
+      [
+        min(min_weight, weight),
+        max(max_weight, weight),
+        total_weight + weight,
+        row_count + 1
+      ]
     end)
 
-    min_weight = Enum.min(weights)
-    max_weight = Enum.max(weights)
-    #IO.inspect(Enum.take(weights, 15))
-    total_weight = Enum.sum(weights)
-    count = Enum.count(f)
-    mean_weight = total_weight / count
+    [ min_weight, max_weight, total_weight, row_count ] = result
+
 
     IO.puts "min weight"
     IO.inspect min_weight
     IO.puts "max weight"
     IO.inspect max_weight
     IO.puts "mean weight"
+    require IEx
+    #IEx.pry
+    mean_weight = total_weight / row_count
     IO.inspect mean_weight
     { min_weight, max_weight, mean_weight }
   end
