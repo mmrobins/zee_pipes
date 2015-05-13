@@ -23,44 +23,56 @@ defmodule ZeePipe do
     ratio
   end
 
-  def min_max_mean do
+  def all_results(seq_test) do
     f = File.stream!('mss.csv')
 
     seed = [
-      99999999,
-      0,
-      0,
-      0,
+      99999999, # min
+      0,        # max
+      0,        # total
+      0,        # row count
+      0,        # female count
+      0,        # male count
+      0,        # match seq count
     ]
 
     result = Enum.reduce(f, seed, fn(x, acc) ->
-      [ _1, gender, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, weight, _14, _15, _16, _17 ] = String.split(x, "\",\"")
+      [ seq, gender, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, weight, _14, _15, _16, _17 ] = String.split(x, "\",\"")
       weight = String.to_float(weight)
 
-      [ min_weight, max_weight, total_weight, row_count ] = acc
+      [ min_w, max_w, total_w, row_count, female, male, seq_count ] = acc
 
+      male_match   = if String.contains?(gender, "female"), do: 0, else: 1
+      female_match = if String.contains?(gender, "female"), do: 1, else: 0
+      seq_match    = if String.contains?(seq, seq_test   ), do: 1, else: 0
 
       [
-        min(min_weight, weight),
-        max(max_weight, weight),
-        total_weight + weight,
-        row_count + 1
+        min(min_w, weight),
+        max(max_w, weight),
+        total_w + weight,
+        row_count + 1,
+        female_match + female,
+        male_match + male,
+        seq_match + seq_count
       ]
     end)
 
-    [ min_weight, max_weight, total_weight, row_count ] = result
+    [ min_w, max_w, total_w, row_count, fem_count, male_count, match_seq ] = result
 
 
-    IO.puts "min weight"
-    IO.inspect min_weight
-    IO.puts "max weight"
-    IO.inspect max_weight
-    IO.puts "mean weight"
-    require IEx
+    #IO.puts "min weight"
+    #IO.inspect min_w
+    #IO.puts "max weight"
+    #IO.inspect max_w
+    #IO.puts "mean weight"
+    #require IEx
     #IEx.pry
-    mean_weight = total_weight / row_count
+    mean_weight = total_w    / row_count
+    fem_ratio   = fem_count  / row_count
+    male_ratio  = male_count / row_count
+
     IO.inspect mean_weight
-    { min_weight, max_weight, mean_weight }
+    { min_w, max_w, mean_weight, fem_ratio, male_ratio, match_seq }
   end
 
   defp count(list, gender) do

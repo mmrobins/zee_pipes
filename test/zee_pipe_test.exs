@@ -20,9 +20,12 @@ defmodule ZeePipeTest do
 
   @tag timeout: 100000
   test "find stuff out" do
-    { min, max, mean } = ZeePipe.min_max_mean
+    { min, max, mean, fem, male, seq } = ZeePipe.all_results("TAGTAAG")
     assert min == 96.8
     assert max == 257.4
     assert_in_delta(mean, 178.2, 1)
+    assert_in_delta(fem, 0.495, 0.01)
+    assert_in_delta(male, 0.505, 0.01)
+    assert seq == 22154
   end
 end
